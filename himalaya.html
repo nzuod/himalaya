@@ -87,7 +87,7 @@ td,th{padding:4px 6px;text-align:right;border-top:1px solid var(--line)}td:first
 <p>全員に秘密の役職が配られます。ポイントを選んで山を登り、自分の役職の勝利条件を満たしたら勝ちです。最大7ターン。高度の上限は20で、マイナスにもなります。</p>
 <h3>役職</h3>
 <ul>
-<li><b class="rS">登頂者</b>：高度10以上でターンを終えたら即勝利。ただし他の役職の人が先に10以上へ着くと資格を失います。</li>
+<li><b class="rS">登頂者</b>：高度10以上で、かつ首位（登頂者以外の人と同じ高度に並ぶと勝てません）のままターンを終えたら即勝利。ただし他の役職の人が先に10以上へ着くと資格を失います。</li>
 <li><b class="rC">登山者</b>：7ターン終了時に最も高い高度にいれば勝ち。</li>
 <li><b class="rL">遭難者</b>：7ターン終了まで誰も高度10以上に着かなければ勝ち。</li>
 <li><b class="rM">山の主</b>：終了時に高度7以上で、かつ単独首位なら勝ち。1ゲームに1回、好きなターンで自分だけ天候の影響を受けなくなります（天候を見る前に決めます）。</li>
@@ -99,7 +99,7 @@ td,th{padding:4px 6px;text-align:right;border-top:1px solid var(--line)}td:first
 <li>山の主が、このターンに天候を無視するか決めます（天候は見られません）。使った人は選んだポイント分だけ上昇します。</li>
 <li>天候を抽選します。最高高度と平均高度が高いほど荒れやすくなります。</li>
 <li>天候の効果で高度が動きます。<br>晴れ：選んだポイント分だけ上昇／雨：ポイント−1分の移動／吹雪：ポイント3以上ならその分上昇、未満なら−1／雪崩：ポイントが最大の人は−3</li>
-<li>告発の結果を公開します。成功なら相手の役職が公開されて相手は−2、失敗なら告発した人が−3です。</li>
+<li>告発の結果を公開します。成功なら相手の役職が公開されて相手は−3、失敗なら告発した人が−3です。</li>
 <li>高度が確定し、勝利を判定します。</li>
 </ol>
 <div class="tb">
@@ -284,13 +284,14 @@ function resolve(){
     acc.push({by:i,to:c.tg,rl:ok?c.rl:'',ok})});
   // 6. 高度確定
   const rows={};
-  ids.forEach(i=>{const p=P[i],pn=(fl[i]?3:0)+(hit[i]?2:0),dl=d[i]-pn;
+  ids.forEach(i=>{const p=P[i],pn=(fl[i]?3:0)+(hit[i]?3:0),dl=d[i]-pn;
     p.alt=Math.min(20,p.alt+dl);if(dl<0)p.retreat=(p.retreat||0)+1;
     if(p.role==='S'&&p.alt>=10&&!p.reach)p.reach=t;
     rows[i]={pt:ch[i].pt,e:e[i],d:d[i],pn}});
   const last={turn:t,P:Pv,w,ig:ids.filter(i=>ch[i].ab),rows,acc};
   const out={players:P,last,choices:null,['hist/t'+t]:last};
-  const win=ids.filter(i=>P[i].role==='S'&&P[i].alt>=10&&!R.sDq);   // 先に非登頂者が到達していれば資格なし
+  const mxA=Math.max(...ids.map(i=>P[i].alt)),top=ids.filter(i=>P[i].alt===mxA);
+  const win=!R.sDq&&mxA>=10&&top.every(i=>P[i].role==='S')?top:[];   // 最高高度が10以上で、その全員が登頂者なら勝利（登頂者同士の同率はタイブレーク）   // 先に非登頂者が到達していれば資格なし
   out.anyReach=!!R.anyReach||ids.some(i=>P[i].alt>=10);
   out.sDq=!!R.sDq||ids.some(i=>P[i].role!=='S'&&P[i].alt>=10);
   if(win.length){out.winners=best(P,win,'S');out.phase='end';out.why='登頂者が高度10に到達'}
