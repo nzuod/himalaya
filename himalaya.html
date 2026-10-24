@@ -26,10 +26,10 @@ details ul,details ol{padding-left:1.3em}
 #scene.w0{background:linear-gradient(#5fa8d8,#d4e8f3)}#scene.w1{background:linear-gradient(#3b4b59,#1b2630)}
 #scene.w2{background:linear-gradient(#a9b5be,#e8edf0)}#scene.w3{background:linear-gradient(#6d757b,#d9dee1)}
 #scene.sh{animation:shake .15s 14}
-.mt{position:absolute;left:5%;right:5%;bottom:0;height:92%;clip-path:polygon(0 100%,50% 0,100% 100%);background:linear-gradient(#f4f7f9 0,#f4f7f9 15%,#8294a1 15%,#3c4f61)}
-.l10{position:absolute;left:0;right:0;bottom:52%;border-top:2px dashed var(--flag);z-index:1}
+.mt{position:absolute;left:5%;right:5%;bottom:0;height:92%;clip-path:polygon(0 100%,36% 6%,64% 6%,100% 100%);background:linear-gradient(#f4f7f9 0,#f4f7f9 15%,#8294a1 15%,#3c4f61)}
+.l10{position:absolute;left:0;right:0;bottom:73.7%;border-top:2px dashed var(--flag);z-index:1}
 .l10 span{position:absolute;right:6px;top:2px;font-size:.72rem;color:var(--flag);text-shadow:0 1px 2px #000}
-.tk{position:absolute;z-index:2;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:var(--pan);border:2px solid var(--ink);display:grid;place-items:center;font-size:15px;transition:left 1.8s ease-in-out,bottom 1.8s ease-in-out}
+.tk{position:absolute;z-index:2;width:30px;height:30px;margin:0 0 -15px -15px;border-radius:50%;background:var(--pan);border:2px solid var(--ink);display:grid;place-items:center;font-size:15px;transition:left 1.8s ease-in-out,bottom 1.8s ease-in-out}
 .tk.nt{transition:none}.tk.me{border-color:var(--flag)}
 .tk small{position:absolute;top:31px;left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;color:#fff;text-shadow:0 1px 3px #000}
 .tk.win{border-color:var(--flag);animation:glow 1.2s ease-in-out infinite alternate}
@@ -54,13 +54,14 @@ details ul,details ol{padding-left:1.3em}
 @keyframes glow{from{box-shadow:0 0 0 0 #e3a63b66}to{box-shadow:0 0 22px 6px #e3a63b}}
 @keyframes conf{to{transform:translateY(105vh) rotate(720deg)}}@keyframes rise{from{transform:scale(.4);opacity:0}}
 @media(prefers-reduced-motion:reduce){#fx,#conf{display:none}.tk{transition-duration:.01s}.pop,.winner .big,.tk.win,#scene.sh{animation:none}}
-.pl{display:grid;grid-template-columns:1fr 34px;gap:2px 8px;padding:7px 0;border-top:1px solid var(--line)}
+.pl{display:grid;grid-template-columns:1fr 64px;gap:2px 8px;padding:7px 0;border-top:1px solid var(--line)}
 .pl:first-child{border-top:0}.pl.me .nm{color:var(--flag)}
 .nm{grid-column:1/3;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .nm small{color:var(--dim);font-size:.75rem}
 .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.v small{display:block;font-size:.74rem;line-height:1.2;color:var(--dim)}.v .up{color:#9be8b8}.v .dn{color:#ff9c85}
 .trk{position:relative;height:10px;margin-top:5px;background:var(--bg);border-radius:5px}
-.trk i{position:absolute;left:60%;top:-3px;bottom:-3px;width:2px;background:var(--flag)}
+.trk i{position:absolute;left:85%;top:-3px;bottom:-3px;width:2px;background:var(--flag)}
 .trk b{position:absolute;top:-3px;width:16px;height:16px;margin-left:-8px;background:var(--ink);border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
 em{font-style:normal;font-size:.75rem;padding:1px 8px;border-radius:10px;border:1px solid}
 .rS{color:var(--flag)}.rC{color:var(--ok)}.rL{color:var(--red)}.rM{color:#8fb7e8}
@@ -77,7 +78,7 @@ td,th{padding:4px 6px;text-align:right;border-top:1px solid var(--line)}td:first
 <div id="setup">
 <section><h2>参加する</h2>
 <label>プレイヤー名（絵文字OK・12文字まで）<input id="nm" maxlength="30" autocomplete="off"></label>
-<label>合言葉（部屋の名前・20文字まで）<input id="cd" maxlength="40" autocomplete="off" placeholder="例：やまのぼり　ヒマラヤ2　山の会"></label>
+<label>合言葉（部屋の名前・20文字まで）<input id="cd" maxlength="40" autocomplete="off"></label>
 <div class="row"><button onclick="enter(true)">部屋を作る</button><button onclick="enter(false)">部屋に入る</button></div>
 <p id="cfgwarn" class="warn" hidden>Firebaseが未設定のため、このままでは遊べません。HTML冒頭のCFGに設定値を入れてください。</p>
 </section>
@@ -178,6 +179,19 @@ function start(){
 function again(){const p={};Object.keys(R.players).forEach(i=>p[i]={name:R.players[i].name,bot:!!R.players[i].bot});
   busy=0;botT=0;ref.update({phase:'lobby',players:p,choices:null,last:null,hist:null,winners:null,why:null})}
 
+/* ---------- シェア ---------- */
+function shareText(){
+  const P=R.players,m=P[me],w=R.winners||[];
+  const res=w.length?(w.includes(me)?'勝ちました！':'負けました…'):'';
+  const who=w.length?`勝ったのは${w.map(i=>P[i].name+'さん').join('、')}（${RN[P[w[0]].role]}）！`:'勝者なし！誰も勝てませんでした…';
+  return `🏔ヒマラヤゲームで${RN[m.role]}でした！${res}\n${who}\n3人から遊べる、役職を隠して山を登るゲーム\n#ヒマラヤゲーム\nhttps://nzuod.github.io/himalaya/himalaya.html`;
+}
+function shareX(){window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(shareText()),'_blank','noopener')}
+async function shareOther(){
+  const t=shareText();
+  try{if(navigator.share){await navigator.share({text:t});return}await navigator.clipboard.writeText(t);alert('コピーしました')}catch(e){}
+}
+
 /* ---------- BOT ---------- */
 const BOTS=['チキンカレー','キーマカレー','マトンカレー','バターチキンカレー','ナン','チーズナン','ラッシー','マンゴーラッシー'].map(x=>x+'🤖');
 function addBot(){
@@ -267,7 +281,7 @@ function resolve(){
   const hit={},fl={},acc=[];
   ids.forEach(i=>{const c=ch[i];if(!c.tg)return;const ok=P[c.tg].role===c.rl;
     if(ok){P[c.tg].revealed=true;hit[c.tg]=1;P[i].accOK=true}else{fl[i]=1;P[i].accFail=true}
-    acc.push({by:i,to:c.tg,rl:c.rl,ok})});
+    acc.push({by:i,to:c.tg,rl:ok?c.rl:'',ok})});
   // 6. 高度確定
   const rows={};
   ids.forEach(i=>{const p=P[i],pn=(fl[i]?3:0)+(hit[i]?2:0),dl=d[i]-pn;
@@ -287,8 +301,8 @@ function resolve(){
 
 /* ---------- 表示 ---------- */
 const board=(P,all)=>Object.keys(P).map(i=>{
-  const p=P[i],v=p.alt||0,sh=all||i===me||p.revealed,pc=(Math.max(-5,Math.min(20,v))+5)*4;
-  return `<div class="pl${i===me?' me':''}"><div class="nm">${esc(p.name)}${sh?`<em class="r${p.role}">${RN[p.role]}</em>`:''}${p.accUsed?'<small>告発済</small>':''}</div><div class="trk"><i></i><b style="left:${pc}%"></b></div><div class="v">${v}</div></div>`}).join('');
+  const p=P[i],v=p.alt||0,sh=all||i===me||p.revealed,pc=fr(v)*100;
+  return `<div class="pl${i===me?' me':''}"><div class="nm">${esc(p.name)}${sh?`<em class="r${p.role}">${RN[p.role]}</em>`:''}${p.accUsed?'<small>告発済</small>':''}</div><div class="trk"><i></i><b style="left:${pc}%"></b></div><div class="v">${v}${dl(i)}</div></div>`}).join('');
 
 function lastView(P){
   const L=R.last;if(!L)return'';
@@ -297,7 +311,7 @@ function lastView(P){
   <p class="big">${WN[L.w]}</p><p class="mute">天候判定値 ${L.P.toFixed(1)}${(L.ig||[]).length?` ／ ${L.ig.map(nm).join('・')}は天候を無視`:''}</p>
   <table><tr><th>名前</th><th>選択</th><th>実効</th><th>天候</th><th>告発P</th></tr>
   ${Object.keys(L.rows).map(i=>{const r=L.rows[i];return `<tr><td>${nm(i)}</td><td>${r.pt}</td><td>${r.e}</td><td>${r.d>0?'+':''}${r.d}</td><td>${r.pn?'−'+r.pn:''}</td></tr>`}).join('')}</table>
-  ${(L.acc||[]).map(a=>`<p>${nm(a.by)} → ${nm(a.to)}を「${RN[a.rl]}」と告発：<b class="${a.ok?'rC':'warn'}">${a.ok?'成功':'失敗'}</b></p>`).join('')}</section>`;
+  ${(L.acc||[]).map(a=>`<p>${nm(a.by)} → ${nm(a.to)}を${a.ok?`「${RN[a.rl]}」と`:''}告発：<b class="${a.ok?'rC':'warn'}">${a.ok?'成功':'失敗'}</b></p>`).join('')}</section>`;
 }
 
 function form(m,P){
@@ -312,7 +326,9 @@ function form(m,P){
   <button class="go" onclick="submit()">決定</button></section>`;
 }
 
-const pos=(t,a,k,n)=>{const f=(Math.max(-5,Math.min(20,a))+5)/25,ln=n>1?k/(n-1)*2-1:0;t.style.left=(50+ln*(1-f)*40)+'%';t.style.bottom=(4+f*80)+'%'};
+const fr=a=>{a=Math.max(-5,Math.min(20,a));return a<=10?(a+5)/15*.85:.85+(a-10)/10*.15};   // 高度10が山の約85%の位置
+const pos=(t,a,k,n)=>{const f=fr(a),ln=n>1?k/(n-1)*2-1:0;t.style.left=(50+ln*(8+(1-f)*32))+'%';t.style.bottom=(4+f*82)+'%'};   // 駒の中心が高度の位置
+const dl=i=>{const r=!anim&&R.last&&R.last.rows&&R.last.rows[i];if(!r)return'';const x=r.d-r.pn;return x?`<small class="${x>0?'up':'dn'}">${x>0?'+':'−'}${Math.abs(x)}</small>`:'<small>±0</small>'};
 const parts=(c,n)=>Array.from({length:n},()=>`<i class="${c}" style="left:${Math.random()*100}%;animation-delay:-${Math.random()*1.2}s"></i>`).join('');
 function fx(w){
   const sc=$('#scene'),f=$('#fx'),l=$('#wl');
@@ -361,8 +377,8 @@ function render(){
     const end=ph==='end';
     if(m)h+=`<section><h2>あなたの役職：<span class="r${m.role}">${RN[m.role]}</span></h2><p class="mute">${end?'ゲーム終了':`ターン ${R.turn} / ${MAXT}`}　高度 ${m.alt}</p></section>`;
     if(end&&!anim){const w=R.winners||[];
-      h+=`<section class="winner"><h2>勝者</h2><p class="big">${w.length?'👑 '+w.map(i=>esc(P[i].name)+` <em class="r${P[i].role}">${RN[P[i].role]}</em>`).join('　'):'勝者なし'}</p><p class="mute">${esc(R.why||'')}${w.length>1?'（全条件が同点のため共同勝利）':''}</p>${isHost?'<button class="go" onclick="again()">もう一度（ロビーへ）</button>':''}</section>`}
-    h+=`<section><h2>高度（10が登頂ライン）</h2>${board(P,end)}</section>`+(anim?'':lastView(P));
+      h+=`<section class="winner"><h2>勝者</h2><p class="big">${w.length?'👑 '+w.map(i=>esc(P[i].name)+` <em class="r${P[i].role}">${RN[P[i].role]}</em>`).join('　'):'勝者なし'}</p><p class="mute">${esc(R.why||'')}${w.length>1?'（全条件が同点のため共同勝利）':''}</p><div class="row"><button onclick="shareX()">Xで投稿</button><button onclick="shareOther()">共有・コピー</button></div>${isHost?'<button class="go" onclick="again()">もう一度（ロビーへ）</button>':''}</section>`}
+    h+=`<section><h2>高度（10が登頂ライン・右下の数字は直前ターンの増減）</h2>${board(P,end)}</section>`+(anim?'':lastView(P));
     if(!end&&m){
       const C=R.choices||{},done=ids.filter(i=>C[i]&&C[i].t===R.turn).length;
       h+=C[me]&&C[me].t===R.turn
