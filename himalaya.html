@@ -135,7 +135,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}};
 let me=ls('hm_pid')||Math.random().toString(36).slice(2,10);ls('hm_pid',me);
 let code='',R=null,ref=null,db=null,busy=0,sel={pt:1,ab:false,tg:'',rl:'',t:0};
-let shown={},seenTurn=null,anim=false,celeb=false;
+let shown={},seenTurn=null,anim=false,celeb=false,botT=0;
 
 $('#nm').value=ls('hm_name')||'';
 $('#cfgwarn').hidden=!!CFG.databaseURL;
@@ -172,11 +172,37 @@ function deal(n){let r=[];
 function start(){
   const ids=Object.keys(R.players);if(ids.length<3)return alert('3人以上必要です');
   const ro=deal(ids.length),P={};
-  ids.forEach((i,k)=>P[i]={name:R.players[i].name,role:ro[k],alt:0,used:{p1:0,p2:0,p3:0,p4:0,p5:0},accUsed:false,revealed:false,accFail:false,accOK:false,retreat:0,reach:0,abil:false});
-  busy=0;ref.update({players:P,phase:'select',turn:1,choices:null,last:null,hist:null,sDq:false,anyReach:false,winners:null,why:null});
+  ids.forEach((i,k)=>P[i]={name:R.players[i].name,bot:!!R.players[i].bot,role:ro[k],alt:0,used:{p1:0,p2:0,p3:0,p4:0,p5:0},accUsed:false,revealed:false,accFail:false,accOK:false,retreat:0,reach:0,abil:false});
+  busy=0;botT=0;ref.update({players:P,phase:'select',turn:1,choices:null,last:null,hist:null,sDq:false,anyReach:false,winners:null,why:null});
 }
-function again(){const p={};Object.keys(R.players).forEach(i=>p[i]={name:R.players[i].name});
-  busy=0;ref.update({phase:'lobby',players:p,choices:null,last:null,hist:null,winners:null,why:null})}
+function again(){const p={};Object.keys(R.players).forEach(i=>p[i]={name:R.players[i].name,bot:!!R.players[i].bot});
+  busy=0;botT=0;ref.update({phase:'lobby',players:p,choices:null,last:null,hist:null,winners:null,why:null})}
+
+/* ---------- BOT ---------- */
+const BOTS=['チキンカレー','キーマカレー','マトンカレー','バターチキンカレー','ナン','チーズナン','ラッシー','マンゴーラッシー'].map(x=>x+'🤖');
+function addBot(){
+  const P=R.players||{};if(Object.keys(P).length>=8)return;
+  const fr=BOTS.map((n,j)=>j).filter(j=>!P['bot'+j]);if(!fr.length)return;
+  const k=fr[Math.random()*fr.length|0];ref.child('players/bot'+k).set({name:BOTS[k],bot:true});   // 未使用の名前からランダム
+}
+function delBot(){const ks=Object.keys(R.players).filter(i=>R.players[i].bot);if(ks.length)ref.child('players/'+ks[ks.length-1]).remove()}
+const wp=(a,f)=>{const w=a.map(f);let r=Math.random()*w.reduce((x,y)=>x+y,0);for(let k=0;k<a.length;k++){r-=w[k];if(r<0)return a[k]}return a[0]};
+function botPick(p){   // 自分の役職と公開情報だけで決める（告発はしない）
+  const t=R.turn,left=MAXT-t+1,u=n=>LIM['p'+n]-(p.used['p'+n]||0),a=p.alt||0,late=t/MAXT,r=p.role;
+  const av=[1,2,3,4,5].filter(n=>u(n)>0),remL=[2,3,4,5].reduce((s,n)=>s+u(n),0);
+  let pool=remL>=left?av.filter(n=>n>=2):av;   // 使い切りポイントを余らせない
+  if(!pool.length)pool=av;
+  const f=r=='S'?n=>n*n:r=='C'?n=>n>=3?n*late*late*3:(n==2?1.2:1)*(1.3-late):r=='L'?n=>n<=2?3:n==3?1.5:.7:n=>n>=3?n*late*2:(n==2?1.3:1);
+  if(r=='S'&&a>=5){const fin=pool.filter(n=>n>=10-a+1);if(fin.length)pool=fin}   // 天候で−1されても届く数
+  if(r=='L'&&a>=7){const lo=pool.filter(n=>n<=2);if(lo.length)pool=lo}
+  return{pt:wp(pool,f),ab:r=='M'&&!p.abil&&t>=3&&Math.random()<1/(MAXT+1-t),tg:'',rl:'',t};
+}
+function botTurn(){
+  if(botT===R.turn)return;botT=R.turn;
+  const C=R.choices||{},turn=R.turn;
+  Object.keys(R.players).filter(i=>R.players[i].bot&&!(C[i]&&C[i].t===turn)).forEach((i,k)=>{
+    setTimeout(()=>{if(R&&R.phase==='select'&&R.turn===turn)ref.child('choices/'+i).set(botPick(R.players[i]))},800+k*500+Math.random()*1200)});
+}
 
 /* ---------- 入力 ---------- */
 function submit(){
@@ -187,6 +213,7 @@ function submit(){
 /* ---------- ターン処理（ホスト端末が実行） ---------- */
 function tryResolve(){
   if(R.phase!=='select'||busy===R.turn)return;
+  botTurn();
   const C=R.choices||{};
   if(Object.keys(R.players).every(i=>C[i]&&C[i].t===R.turn)){busy=R.turn;resolve()}
 }
@@ -328,7 +355,7 @@ function render(){
   let h=`<p class="mute">合言葉 <b>${esc(code)}</b></p>`;
   if(ph==='lobby'){
     h+=`<section><h2>参加者（${ids.length}/8）</h2>${ids.map(i=>`<div class="pl"><div class="nm">${esc(P[i].name)}${i===R.host?'<small>ホスト</small>':''}</div></div>`).join('')}
-    ${isHost?`<button class="go" onclick="start()" ${ids.length<3?'disabled':''}>ゲーム開始（3人以上）</button>`:'<p class="mute">ホストの開始を待っています</p>'}</section>`;
+    ${isHost?`<div class="row"><button onclick="addBot()" ${ids.length>=8?'disabled':''}>BOTを追加</button><button onclick="delBot()" ${ids.some(i=>P[i].bot)?'':'disabled'}>BOTを外す</button></div><button class="go" onclick="start()" ${ids.length<3?'disabled':''}>ゲーム開始（3人以上）</button>`:'<p class="mute">ホストの開始を待っています</p>'}</section>`;
   }else{
     if(sel.t!==R.turn)sel={pt:1,ab:false,tg:'',rl:'',t:R.turn};
     const end=ph==='end';
