@@ -77,9 +77,8 @@ td,th{padding:4px 6px;text-align:right;border-top:1px solid var(--line)}td:first
 <div id="setup">
 <section><h2>参加する</h2>
 <label>プレイヤー名（絵文字OK・12文字まで）<input id="nm" maxlength="30" autocomplete="off"></label>
-<label>部屋番号<input id="cd" inputmode="numeric" placeholder="参加するときだけ入力"></label>
+<label>合言葉（部屋の名前・20文字まで）<input id="cd" maxlength="40" autocomplete="off" placeholder="例：やまのぼり　ヒマラヤ2　山の会"></label>
 <div class="row"><button onclick="enter(true)">部屋を作る</button><button onclick="enter(false)">部屋に入る</button></div>
-<p class="mute">各自のスマホで遊ぶため、端末同士のやり取りにFirebase（Realtime Database）を使います。</p>
 <p id="cfgwarn" class="warn" hidden>Firebaseが未設定のため、このままでは遊べません。HTML冒頭のCFGに設定値を入れてください。</p>
 </section>
 <details><summary>遊び方</summary>
@@ -147,11 +146,11 @@ async function enter(create){
   if(!CFG.databaseURL)return alert('Firebaseの設定が未入力です');
   ls('hm_name',name);
   if(!db){firebase.initializeApp(CFG);db=firebase.database()}
-  code=create?String(1000+Math.floor(Math.random()*9000)):$('#cd').value.trim();
-  if(!code)return alert('部屋番号を入力してください');
-  ref=db.ref('rooms/'+code);
-  const s=await ref.get();
-  if(create&&s.exists())return enter(true);
+  code=Array.from($('#cd').value.normalize('NFKC').trim().toLowerCase()).slice(0,20).join('');
+  if(!code)return alert('合言葉を入力してください');
+  ref=db.ref('rooms/'+encodeURIComponent(code).replace(/\./g,'%2E'));   // Firebaseのキーに使えない文字を変換
+  const s=await ref.get(),d0=s.val()||{};
+  if(create&&s.exists()&&d0.phase!=='end'&&Date.now()-(d0.created||0)<432e5)return alert('その合言葉はすでに使われています。別の言葉にしてください');
   if(!create){
     if(!s.exists())return alert('部屋が見つかりません');
     const d=s.val(),ps=d.players||{};
@@ -326,7 +325,7 @@ function render(){
   const g=$('#game');if(!R){g.innerHTML='';return}
   const P=R.players||{},ids=Object.keys(P),m=P[me],isHost=R.host===me,ph=R.phase;
   if(ph==='lobby')reset();else stage(P);
-  let h=`<p class="mute">部屋番号 <b>${esc(code)}</b></p>`;
+  let h=`<p class="mute">合言葉 <b>${esc(code)}</b></p>`;
   if(ph==='lobby'){
     h+=`<section><h2>参加者（${ids.length}/8）</h2>${ids.map(i=>`<div class="pl"><div class="nm">${esc(P[i].name)}${i===R.host?'<small>ホスト</small>':''}</div></div>`).join('')}
     ${isHost?`<button class="go" onclick="start()" ${ids.length<3?'disabled':''}>ゲーム開始（3人以上）</button>`:'<p class="mute">ホストの開始を待っています</p>'}</section>`;
