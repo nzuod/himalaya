@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ヒマラヤゲーム</title>
+<style>
+:root{--bg:#0f1a24;--pan:#182a39;--line:#2c4357;--ink:#e9eff3;--dim:#8da2b2;--flag:#e3a63b;--red:#d2603f;--ok:#62b08e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+main{max-width:560px;margin:0 auto;padding:16px 14px 60px}
+h1,h2{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-weight:700;margin:0 0 8px}
+h1{font-size:2rem;letter-spacing:.08em}h2{font-size:1.15rem;color:var(--flag)}
+section{background:var(--pan);border:1px solid var(--line);border-radius:6px;padding:14px;margin:12px 0}
+input,select,button{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 12px;min-height:44px}
+input,select{width:100%}
+button{cursor:pointer}button:disabled{opacity:.3;cursor:not-allowed}
+button.go{background:var(--flag);color:#1a1405;border-color:var(--flag);font-weight:700;width:100%;margin-top:10px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+.row{display:flex;gap:8px;margin:8px 0}.row>*{flex:1}
+details{background:var(--pan);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin:12px 0}
+summary{cursor:pointer;font-weight:700;color:var(--flag);min-height:28px}
+details h3{font-size:1rem;margin:16px 0 4px}details p,details ul,details ol{margin:4px 0;font-size:.92rem}
+details ul,details ol{padding-left:1.3em}
+.tb{margin-top:18px;padding-top:10px;border-top:1px solid var(--line);color:var(--dim);font-size:.78rem;opacity:.75}
+.tb p{margin:2px 0}
+.pl{display:grid;grid-template-columns:1fr 34px;gap:2px 8px;padding:7px 0;border-top:1px solid var(--line)}
+.pl:first-child{border-top:0}.pl.me .nm{color:var(--flag)}
+.nm{grid-column:1/3;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.nm small{color:var(--dim);font-size:.75rem}
+.v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.trk{position:relative;height:10px;margin-top:5px;background:var(--bg);border-radius:5px}
+.trk i{position:absolute;left:60%;top:-3px;bottom:-3px;width:2px;background:var(--flag)}
+.trk b{position:absolute;top:-3px;width:16px;height:16px;margin-left:-8px;background:var(--ink);border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
+em{font-style:normal;font-size:.75rem;padding:1px 8px;border-radius:10px;border:1px solid}
+.rS{color:var(--flag)}.rC{color:var(--ok)}.rL{color:var(--red)}.rM{color:#8fb7e8}
+.pts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.pt{display:flex;flex-direction:column;align-items:center;line-height:1.2;font-size:1.3rem;font-weight:700}
+.pt small{font-size:.7rem;color:var(--dim);font-weight:400}
+.pt.on{background:var(--flag);color:#1a1405;border-color:var(--flag)}.pt.on small{color:#1a1405}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+td,th{padding:4px 6px;text-align:right;border-top:1px solid var(--line)}td:first-child,th:first-child{text-align:left}
+.big{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:1.6rem}
+.mute{color:var(--dim);font-size:.85rem}.warn{color:var(--red)}
+</style></head><body><main>
+<h1>ヒマラヤ</h1>
+<div id="setup">
+<section><h2>参加する</h2>
+<label>プレイヤー名（絵文字OK・12文字まで）<input id="nm" maxlength="30" autocomplete="off"></label>
+<label>部屋番号<input id="cd" inputmode="numeric" placeholder="参加するときだけ入力"></label>
+<div class="row"><button onclick="enter(true)">部屋を作る</button><button onclick="enter(false)">部屋に入る</button></div>
+<p class="mute">各自のスマホで遊ぶため、端末同士のやり取りにFirebase（Realtime Database）を使います。</p>
+<p id="cfgwarn" class="warn" hidden>Firebaseが未設定のため、このままでは遊べません。HTML冒頭のCFGに設定値を入れてください。</p>
+</section>
+<details><summary>遊び方</summary>
+<h3>ゲームの目的</h3>
+<p>全員に秘密の役職が配られます。ポイントを選んで山を登り、自分の役職の勝利条件を満たしたら勝ちです。最大7ターン。高度の上限は20で、マイナスにもなります。</p>
+<h3>役職</h3>
+<ul>
+<li><b class="rS">登頂者</b>：高度10以上でターンを終えたら即勝利。ただし他の役職の人が先に10以上へ着くと資格を失います。</li>
+<li><b class="rC">登山者</b>：7ターン終了時に最も高い高度にいれば勝ち。</li>
+<li><b class="rL">遭難者</b>：7ターン終了まで誰も高度10以上に着かなければ勝ち。</li>
+<li><b class="rM">山の主</b>：終了時に高度7以上で、かつ単独首位なら勝ち。1ゲームに1回、全員の選択ポイントを−1にできます。</li>
+</ul>
+<p>勝利の優先順位：登頂者＝遭難者 ＞ 登山者＝山の主</p>
+<h3>1ターンの流れ</h3>
+<ol>
+<li>全員が同時にポイントを選び、告発する人は相手と役職を選びます。ポイント1は無制限、2は3回まで、3・4・5は各1回だけ使えます。告発は1ゲームに1回です。</li>
+<li>山の主が能力を使うか決めます（天候は見られません）。</li>
+<li>天候を抽選します。最高高度と平均高度が高いほど荒れやすくなります。</li>
+<li>天候の効果で高度が動きます。<br>晴れ：選んだポイント分だけ上昇／雨：ポイント−1分の移動／吹雪：ポイント3以上ならその分上昇、未満なら−1／雪崩：ポイントが最大の人は−3</li>
+<li>告発の結果を公開します。成功なら相手の役職が公開されて相手は−2、失敗なら告発した人が−3です。</li>
+<li>高度が確定し、勝利を判定します。</li>
+</ol>
+<div class="tb">
+<p>同じ役職で勝利条件を満たした人が複数いるときは、次の順で比べます。</p>
+<p>登頂者：到達ターンが早い ＞ 高度が高い ＞ 役職が未公開 ＞ 告発失敗なし ＞ 後退が少ない ＞ 残り3・4・5の合計が大きい</p>
+<p>登山者：高度が高い ＞ 後退が少ない ＞ 役職が未公開 ＞ 告発失敗なし ＞ 残り3・4・5の合計が大きい</p>
+<p>遭難者：告発成功あり ＞ 役職が未公開 ＞ 告発失敗なし ＞ 高度が高い</p>
+<p>山の主：高度が高い ＞ 能力を使っていない ＞ 役職が未公開 ＞ 告発失敗なし ＞ 後退が少ない ＞ 残り3・4・5の合計が大きい</p>
+</div>
+</details></div>
+<div id="game"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+// ▼ Firebaseコンソール > プロジェクト設定 > マイアプリ の値を貼る（Realtime Database を使用）
+const CFG={apiKey: "AIzaSyBXOUSjQp6DgGY05MVLL6W9chMTx3GyHy4",
+  authDomain: "himalaya-39a80.firebaseapp.com",
+  databaseURL: "https://himalaya-39a80-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "himalaya-39a80",
+  storageBucket: "himalaya-39a80.firebasestorage.app",
+  messagingSenderId: "148202710728",
+  appId: "1:148202710728:web:7c8b236cd1d1c90ef327fd",
+  measurementId: "G-GPELFLJJ8B"};
+
+const RN={S:'登頂者',C:'登山者',L:'遭難者',M:'山の主'},WN=['晴れ','雨','吹雪','雪崩'];
+const LIM={p1:99,p2:3,p3:1,p4:1,p5:1},MAXT=7;
+const TB=[[2,[55,25,15,5]],[4,[40,30,20,10]],[6,[25,30,25,20]],[8,[15,25,30,30]],[1e9,[10,20,30,40]]];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}};
+let me=ls('hm_pid')||Math.random().toString(36).slice(2,10);ls('hm_pid',me);
+let code='',R=null,ref=null,db=null,busy=0,sel={pt:1,ab:false,tg:'',rl:'',t:0};
+
+$('#nm').value=ls('hm_name')||'';
+$('#cfgwarn').hidden=!!CFG.databaseURL;
+
+async function enter(create){
+  const name=Array.from($('#nm').value.trim()).slice(0,12).join('');
+  if(!name)return alert('プレイヤー名を入力してください');
+  if(!CFG.databaseURL)return alert('Firebaseの設定が未入力です');
+  ls('hm_name',name);
+  if(!db){firebase.initializeApp(CFG);db=firebase.database()}
+  code=create?String(1000+Math.floor(Math.random()*9000)):$('#cd').value.trim();
+  if(!code)return alert('部屋番号を入力してください');
+  ref=db.ref('rooms/'+code);
+  const s=await ref.get();
+  if(create&&s.exists())return enter(true);
+  if(!create){
+    if(!s.exists())return alert('部屋が見つかりません');
+    const d=s.val(),ps=d.players||{};
+    if(!ps[me]&&d.phase!=='lobby')return alert('すでにゲームが始まっています');
+    if(!ps[me]&&Object.keys(ps).length>=8)return alert('満員です（最大8人）');
+  }else await ref.set({host:me,phase:'lobby',turn:1,created:Date.now()});
+  await ref.child('players/'+me).update({name});
+  $('#setup').hidden=true;
+  ref.on('value',x=>{R=x.val();if(R&&R.host===me)tryResolve();render()});
+}
+
+/* ---------- 役職配布 ---------- */
+const draw=()=>{const r=Math.random()*10;return r<3?'S':r<6?'C':r<8?'L':'M'};
+const shuf=a=>{for(let i=a.length;i>1;){const j=Math.random()*i--|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function deal(n){let r=[];
+  if(n==3){while(r.length<3){const x=draw();if(!r.includes(x))r.push(x)}}
+  else{r=['S','C','L','M'];while(r.length<n)r.push(draw())}
+  return shuf(r)}
+function start(){
+  const ids=Object.keys(R.players);if(ids.length<3)return alert('3人以上必要です');
+  const ro=deal(ids.length),P={};
+  ids.forEach((i,k)=>P[i]={name:R.players[i].name,role:ro[k],alt:0,used:{p1:0,p2:0,p3:0,p4:0,p5:0},accUsed:false,revealed:false,accFail:false,accOK:false,retreat:0,reach:0,abil:false});
+  busy=0;ref.update({players:P,phase:'select',turn:1,choices:null,last:null,hist:null,sDq:false,anyReach:false,winners:null,why:null});
+}
+function again(){const p={};Object.keys(R.players).forEach(i=>p[i]={name:R.players[i].name});
+  busy=0;ref.update({phase:'lobby',players:p,choices:null,last:null,hist:null,winners:null,why:null})}
+
+/* ---------- 入力 ---------- */
+function submit(){
+  if(!!sel.tg!==!!sel.rl)return alert('告発は「相手」と「役職」を両方選んでください');
+  ref.child('choices/'+me).set({pt:sel.pt,ab:sel.ab,tg:sel.tg,rl:sel.rl,t:R.turn});
+}
+
+/* ---------- ターン処理（ホスト端末が実行） ---------- */
+function tryResolve(){
+  if(R.phase!=='select'||busy===R.turn)return;
+  const C=R.choices||{};
+  if(Object.keys(R.players).every(i=>C[i]&&C[i].t===R.turn)){busy=R.turn;resolve()}
+}
+function force(){if(confirm('未提出の人はポイント1・告発なしで進めます。よろしいですか？')){busy=R.turn;resolve()}}
+
+function key(p,r){
+  const A=p.alt,B=-(p.retreat||0),V=+!p.revealed,F=+!p.accFail,
+        Rm=[3,4,5].reduce((s,n)=>s+((p.used['p'+n]||0)?0:n),0);
+  if(r=='S')return[-(p.reach||99),A,V,F,B,Rm];
+  if(r=='C')return[A,B,V,F,Rm];
+  if(r=='L')return[+!!p.accOK,V,F,A];
+  return[A,+!p.abil,V,F,B,Rm];
+}
+function best(P,ids,r){
+  if(!ids.length)return[];
+  const cmp=(a,b)=>{for(let j=0;j<a.length;j++)if(a[j]!==b[j])return a[j]-b[j];return 0};
+  const k=ids.map(i=>[i,key(P[i],r)]).sort((a,b)=>cmp(b[1],a[1]));
+  return k.filter(x=>!cmp(x[1],k[0][1])).map(x=>x[0]);
+}
+function final(P,any){
+  const ids=Object.keys(P),mx=Math.max(...ids.map(i=>P[i].alt)),top=ids.filter(i=>P[i].alt===mx);
+  const L=any?[]:ids.filter(i=>P[i].role==='L');
+  if(L.length)return best(P,L,'L');                       // 第1優先：遭難者
+  const c=top.filter(i=>P[i].role==='C');
+  if(c.length)return best(P,c,'C');                        // 第2優先：登山者 / 山の主
+  return top.length==1&&mx>=7&&P[top[0]].role==='M'?top:[];
+}
+
+function resolve(){
+  const P=JSON.parse(JSON.stringify(R.players)),ids=Object.keys(P),C=R.choices||{},t=R.turn,ch={};
+  // 1. ポイント・告発の消費
+  ids.forEach(i=>{
+    const p=P[i];let c=C[i]&&C[i].t===t?C[i]:{pt:1,ab:false,tg:'',rl:''},n=+c.pt;
+    if(!(n>=1&&n<=5)||(p.used['p'+n]||0)>=LIM['p'+n])n=1;
+    p.used['p'+n]=(p.used['p'+n]||0)+1;
+    const ac=c.tg&&c.rl&&!p.accUsed&&c.tg!==i&&P[c.tg];
+    if(ac)p.accUsed=true;
+    ch[i]={pt:n,tg:ac?c.tg:'',rl:ac?c.rl:'',ab:!!c.ab&&p.role==='M'&&!p.abil};
+  });
+  // 2. 山の主の能力
+  const nAb=ids.filter(i=>ch[i].ab).length;ids.forEach(i=>{if(ch[i].ab)P[i].abil=true});
+  const e={};ids.forEach(i=>e[i]=ch[i].pt-nAb);
+  // 3. 天候抽選（当ターン開始時点の高度）
+  const al=ids.map(i=>P[i].alt),Pv=(Math.max(...al)+al.reduce((a,b)=>a+b,0)/al.length)/2;
+  const row=TB.find(r=>Pv<r[0])[1];let x=Math.random()*100,w=0;
+  while(w<3&&x>=row[w]){x-=row[w];w++}
+  // 4. 天候効果
+  const mx=Math.max(...ids.map(i=>e[i])),d={};
+  ids.forEach(i=>{const v=e[i];d[i]=w==0?v:w==1?v-1:w==2?(v>=3?v:-1):(v===mx?-3:v)});
+  // 5. 告発
+  const hit={},fl={},acc=[];
+  ids.forEach(i=>{const c=ch[i];if(!c.tg)return;const ok=P[c.tg].role===c.rl;
+    if(ok){P[c.tg].revealed=true;hit[c.tg]=1;P[i].accOK=true}else{fl[i]=1;P[i].accFail=true}
+    acc.push({by:i,to:c.tg,rl:c.rl,ok})});
+  // 6. 高度確定
+  const rows={};
+  ids.forEach(i=>{const p=P[i],pn=(fl[i]?3:0)+(hit[i]?2:0),dl=d[i]-pn;
+    p.alt=Math.min(20,p.alt+dl);if(dl<0)p.retreat=(p.retreat||0)+1;
+    if(p.role==='S'&&p.alt>=10&&!p.reach)p.reach=t;
+    rows[i]={pt:ch[i].pt,e:e[i],d:d[i],pn}});
+  const last={turn:t,P:Pv,w,nAb,rows,acc};
+  const out={players:P,last,choices:null,['hist/t'+t]:last};
+  const win=ids.filter(i=>P[i].role==='S'&&P[i].alt>=10&&!R.sDq);   // 先に非登頂者が到達していれば資格なし
+  out.anyReach=!!R.anyReach||ids.some(i=>P[i].alt>=10);
+  out.sDq=!!R.sDq||ids.some(i=>P[i].role!=='S'&&P[i].alt>=10);
+  if(win.length){out.winners=best(P,win,'S');out.phase='end';out.why='登頂者が高度10に到達'}
+  else if(t>=MAXT){out.winners=final(P,out.anyReach);out.phase='end';out.why='7ターン終了'}
+  else out.turn=t+1;
+  ref.update(out);
+}
+
+/* ---------- 表示 ---------- */
+const board=(P,all)=>Object.keys(P).map(i=>{
+  const p=P[i],v=p.alt||0,sh=all||i===me||p.revealed,pc=(Math.max(-5,Math.min(20,v))+5)*4;
+  return `<div class="pl${i===me?' me':''}"><div class="nm">${esc(p.name)}${sh?`<em class="r${p.role}">${RN[p.role]}</em>`:''}${p.accUsed?'<small>告発済</small>':''}</div><div class="trk"><i></i><b style="left:${pc}%"></b></div><div class="v">${v}</div></div>`}).join('');
+
+function lastView(P){
+  const L=R.last;if(!L)return'';
+  const nm=i=>esc((P[i]||{}).name||'?');
+  return `<section><h2>ターン${L.turn}の結果</h2>
+  <p class="big">${WN[L.w]}</p><p class="mute">天候判定値 ${L.P.toFixed(1)}${L.nAb?` ／ 山の主の能力で選択ポイント−${L.nAb}`:''}</p>
+  <table><tr><th>名前</th><th>選択</th><th>実効</th><th>天候</th><th>告発P</th></tr>
+  ${Object.keys(L.rows).map(i=>{const r=L.rows[i];return `<tr><td>${nm(i)}</td><td>${r.pt}</td><td>${r.e}</td><td>${r.d>0?'+':''}${r.d}</td><td>${r.pn?'−'+r.pn:''}</td></tr>`}).join('')}</table>
+  ${(L.acc||[]).map(a=>`<p>${nm(a.by)} → ${nm(a.to)}を「${RN[a.rl]}」と告発：<b class="${a.ok?'rC':'warn'}">${a.ok?'成功':'失敗'}</b></p>`).join('')}</section>`;
+}
+
+function form(m,P){
+  const pts=[1,2,3,4,5].map(n=>{const left=n==1?'∞':LIM['p'+n]-(m.used['p'+n]||0);
+    return `<button class="pt${sel.pt==n?' on':''}" ${left?'':'disabled'} onclick="sel.pt=${n};render()">${n}<small>残${left}</small></button>`}).join('');
+  const others=Object.keys(P).filter(i=>i!==me);
+  return `<section><h2>ターン${R.turn}：行動を決める</h2>
+  <div class="pts">${pts}</div>
+  ${m.accUsed?'<p class="mute">告発権は使用済みです</p>':`<div class="row"><select aria-label="告発する相手" onchange="sel.tg=this.value"><option value="">告発しない</option>${others.map(i=>`<option value="${i}"${sel.tg===i?' selected':''}>${esc(P[i].name)}</option>`).join('')}</select>
+  <select aria-label="告発する役職" onchange="sel.rl=this.value"><option value="">役職</option>${Object.keys(RN).map(k=>`<option value="${k}"${sel.rl===k?' selected':''}>${RN[k]}</option>`).join('')}</select></div>`}
+  ${m.role==='M'&&!m.abil?`<label><input type="checkbox" style="width:auto;min-height:0" ${sel.ab?'checked':''} onchange="sel.ab=this.checked"> 能力を使う（全員の選択ポイント−1・天候は見られません）</label>`:''}
+  <button class="go" onclick="submit()">決定</button></section>`;
+}
+
+function render(){
+  const g=$('#game');if(!R){g.innerHTML='';return}
+  const P=R.players||{},ids=Object.keys(P),m=P[me],isHost=R.host===me,ph=R.phase;
+  let h=`<p class="mute">部屋番号 <b>${esc(code)}</b></p>`;
+  if(ph==='lobby'){
+    h+=`<section><h2>参加者（${ids.length}/8）</h2>${ids.map(i=>`<div class="pl"><div class="nm">${esc(P[i].name)}${i===R.host?'<small>ホスト</small>':''}</div></div>`).join('')}
+    ${isHost?`<button class="go" onclick="start()" ${ids.length<3?'disabled':''}>ゲーム開始（3人以上）</button>`:'<p class="mute">ホストの開始を待っています</p>'}</section>`;
+  }else{
+    if(sel.t!==R.turn)sel={pt:1,ab:false,tg:'',rl:'',t:R.turn};
+    const end=ph==='end';
+    if(m)h+=`<section><h2>あなたの役職：<span class="r${m.role}">${RN[m.role]}</span></h2><p class="mute">${end?'ゲーム終了':`ターン ${R.turn} / ${MAXT}`}　高度 ${m.alt}</p></section>`;
+    if(end){const w=R.winners||[];
+      h+=`<section><h2>勝者</h2><p class="big">${w.length?w.map(i=>esc(P[i].name)+` <em class="r${P[i].role}">${RN[P[i].role]}</em>`).join('　'):'勝者なし'}</p><p class="mute">${esc(R.why||'')}${w.length>1?'（全条件が同点のため共同勝利）':''}</p>${isHost?'<button class="go" onclick="again()">もう一度（ロビーへ）</button>':''}</section>`}
+    h+=`<section><h2>高度（10が登頂ライン）</h2>${board(P,end)}</section>`+lastView(P);
+    if(!end&&m){
+      const C=R.choices||{},done=ids.filter(i=>C[i]&&C[i].t===R.turn).length;
+      h+=C[me]&&C[me].t===R.turn
+        ?`<section><h2>提出済み</h2><p>他のプレイヤーを待っています（${done}/${ids.length}）</p>${isHost?'<button onclick="force()">未提出を自動で進める</button>':''}</section>`
+        :form(m,P);
+    }
+  }
+  g.innerHTML=h;
+}
+</script></main></body></html>
