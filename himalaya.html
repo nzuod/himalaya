@@ -22,6 +22,38 @@ details h3{font-size:1rem;margin:16px 0 4px}details p,details ul,details ol{marg
 details ul,details ol{padding-left:1.3em}
 .tb{margin-top:18px;padding-top:10px;border-top:1px solid var(--line);color:var(--dim);font-size:.78rem;opacity:.75}
 .tb p{margin:2px 0}
+#scene{position:relative;height:300px;overflow:hidden;border-radius:6px;border:1px solid var(--line);background:linear-gradient(#27465f,#122230);margin:12px 0;transition:background 1s}
+#scene.w0{background:linear-gradient(#5fa8d8,#d4e8f3)}#scene.w1{background:linear-gradient(#3b4b59,#1b2630)}
+#scene.w2{background:linear-gradient(#a9b5be,#e8edf0)}#scene.w3{background:linear-gradient(#6d757b,#d9dee1)}
+#scene.sh{animation:shake .15s 14}
+.mt{position:absolute;left:5%;right:5%;bottom:0;height:92%;clip-path:polygon(0 100%,50% 0,100% 100%);background:linear-gradient(#f4f7f9 0,#f4f7f9 15%,#8294a1 15%,#3c4f61)}
+.l10{position:absolute;left:0;right:0;bottom:52%;border-top:2px dashed var(--flag);z-index:1}
+.l10 span{position:absolute;right:6px;top:2px;font-size:.72rem;color:var(--flag);text-shadow:0 1px 2px #000}
+.tk{position:absolute;z-index:2;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:var(--pan);border:2px solid var(--ink);display:grid;place-items:center;font-size:15px;transition:left 1.8s ease-in-out,bottom 1.8s ease-in-out}
+.tk.nt{transition:none}.tk.me{border-color:var(--flag)}
+.tk small{position:absolute;top:31px;left:50%;transform:translateX(-50%);font-size:10px;white-space:nowrap;color:#fff;text-shadow:0 1px 3px #000}
+.tk.win{border-color:var(--flag);animation:glow 1.2s ease-in-out infinite alternate}
+.tk.win::before{content:"👑";position:absolute;top:-22px;font-size:18px}
+.pop{position:absolute;left:50%;top:-26px;white-space:nowrap;font-weight:700;text-shadow:0 1px 3px #000;animation:pop 2s forwards}
+#fx{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+#fx i{position:absolute;top:-30px;display:block}
+.dr{width:2px;height:16px;background:#bfe0ff;opacity:.75;animation:fall .6s linear infinite}
+.fl{width:7px;height:7px;border-radius:50%;background:#fff;animation:fall 1.4s linear infinite,sway .7s ease-in-out infinite alternate}
+.av{width:46px;height:46px;border-radius:40%;background:#fff;box-shadow:0 0 14px #fff;animation:slide 1.1s ease-in infinite}
+#fx .sun{left:62%;top:8%;width:72px;height:72px;border-radius:50%;background:radial-gradient(#fff6c8,#ffd45a 55%,#ffd45a00 72%);animation:pulse 1s ease-in-out infinite alternate}
+#wl{position:absolute;left:0;right:0;top:10px;z-index:4;text-align:center;font:700 1.6rem "Hiragino Mincho ProN","Yu Mincho",serif;color:#fff;text-shadow:0 2px 6px #000;opacity:0}
+#wl.show{animation:wl 2.4s}
+#conf{position:fixed;inset:0;pointer-events:none;z-index:9;overflow:hidden}
+#conf i{position:absolute;top:-16px;width:9px;height:14px;animation:conf linear forwards}
+.winner{text-align:center;border-color:var(--flag)}.winner .big{animation:rise .9s cubic-bezier(.2,1.4,.4,1)}
+@keyframes fall{to{transform:translateY(340px)}}@keyframes sway{to{margin-left:30px}}
+@keyframes slide{to{transform:translate(-90px,360px) rotate(240deg)}}@keyframes pulse{to{transform:scale(1.25)}}
+@keyframes shake{25%{transform:translate(-4px,2px)}75%{transform:translate(4px,-2px)}}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,10px)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,-34px)}}
+@keyframes wl{0%{opacity:0}15%,85%{opacity:1}100%{opacity:0}}
+@keyframes glow{from{box-shadow:0 0 0 0 #e3a63b66}to{box-shadow:0 0 22px 6px #e3a63b}}
+@keyframes conf{to{transform:translateY(105vh) rotate(720deg)}}@keyframes rise{from{transform:scale(.4);opacity:0}}
+@media(prefers-reduced-motion:reduce){#fx,#conf{display:none}.tk{transition-duration:.01s}.pop,.winner .big,.tk.win,#scene.sh{animation:none}}
 .pl{display:grid;grid-template-columns:1fr 34px;gap:2px 8px;padding:7px 0;border-top:1px solid var(--line)}
 .pl:first-child{border-top:0}.pl.me .nm{color:var(--flag)}
 .nm{grid-column:1/3;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -58,13 +90,13 @@ td,th{padding:4px 6px;text-align:right;border-top:1px solid var(--line)}td:first
 <li><b class="rS">登頂者</b>：高度10以上でターンを終えたら即勝利。ただし他の役職の人が先に10以上へ着くと資格を失います。</li>
 <li><b class="rC">登山者</b>：7ターン終了時に最も高い高度にいれば勝ち。</li>
 <li><b class="rL">遭難者</b>：7ターン終了まで誰も高度10以上に着かなければ勝ち。</li>
-<li><b class="rM">山の主</b>：終了時に高度7以上で、かつ単独首位なら勝ち。1ゲームに1回、全員の選択ポイントを−1にできます。</li>
+<li><b class="rM">山の主</b>：終了時に高度7以上で、かつ単独首位なら勝ち。1ゲームに1回、好きなターンで自分だけ天候の影響を受けなくなります（天候を見る前に決めます）。</li>
 </ul>
 <p>勝利の優先順位：登頂者＝遭難者 ＞ 登山者＝山の主</p>
 <h3>1ターンの流れ</h3>
 <ol>
 <li>全員が同時にポイントを選び、告発する人は相手と役職を選びます。ポイント1は無制限、2は3回まで、3・4・5は各1回だけ使えます。告発は1ゲームに1回です。</li>
-<li>山の主が能力を使うか決めます（天候は見られません）。</li>
+<li>山の主が、このターンに天候を無視するか決めます（天候は見られません）。使った人は選んだポイント分だけ上昇します。</li>
 <li>天候を抽選します。最高高度と平均高度が高いほど荒れやすくなります。</li>
 <li>天候の効果で高度が動きます。<br>晴れ：選んだポイント分だけ上昇／雨：ポイント−1分の移動／吹雪：ポイント3以上ならその分上昇、未満なら−1／雪崩：ポイントが最大の人は−3</li>
 <li>告発の結果を公開します。成功なら相手の役職が公開されて相手は−2、失敗なら告発した人が−3です。</li>
@@ -78,19 +110,14 @@ td,th{padding:4px 6px;text-align:right;border-top:1px solid var(--line)}td:first
 <p>山の主：高度が高い ＞ 能力を使っていない ＞ 役職が未公開 ＞ 告発失敗なし ＞ 後退が少ない ＞ 残り3・4・5の合計が大きい</p>
 </div>
 </details></div>
+<div id="scene" hidden><div class="mt"></div><div class="l10"><span>登頂ライン 10</span></div><div id="fx"></div><div id="wl"></div></div>
+<div id="conf"></div>
 <div id="game"></div>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 // ▼ Firebaseコンソール > プロジェクト設定 > マイアプリ の値を貼る（Realtime Database を使用）
-const CFG={apiKey: "AIzaSyBXOUSjQp6DgGY05MVLL6W9chMTx3GyHy4",
-  authDomain: "himalaya-39a80.firebaseapp.com",
-  databaseURL: "https://himalaya-39a80-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "himalaya-39a80",
-  storageBucket: "himalaya-39a80.firebasestorage.app",
-  messagingSenderId: "148202710728",
-  appId: "1:148202710728:web:7c8b236cd1d1c90ef327fd",
-  measurementId: "G-GPELFLJJ8B"};
+const CFG={apiKey:"",authDomain:"",databaseURL:"",projectId:"",appId:""};
 
 const RN={S:'登頂者',C:'登山者',L:'遭難者',M:'山の主'},WN=['晴れ','雨','吹雪','雪崩'];
 const LIM={p1:99,p2:3,p3:1,p4:1,p5:1},MAXT=7;
@@ -100,6 +127,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){}};
 let me=ls('hm_pid')||Math.random().toString(36).slice(2,10);ls('hm_pid',me);
 let code='',R=null,ref=null,db=null,busy=0,sel={pt:1,ab:false,tg:'',rl:'',t:0};
+let shown={},seenTurn=null,anim=false,celeb=false;
 
 $('#nm').value=ls('hm_name')||'';
 $('#cfgwarn').hidden=!!CFG.databaseURL;
@@ -191,15 +219,15 @@ function resolve(){
     ch[i]={pt:n,tg:ac?c.tg:'',rl:ac?c.rl:'',ab:!!c.ab&&p.role==='M'&&!p.abil};
   });
   // 2. 山の主の能力
-  const nAb=ids.filter(i=>ch[i].ab).length;ids.forEach(i=>{if(ch[i].ab)P[i].abil=true});
-  const e={};ids.forEach(i=>e[i]=ch[i].pt-nAb);
+  ids.forEach(i=>{if(ch[i].ab)P[i].abil=true});
+  const e={};ids.forEach(i=>e[i]=ch[i].pt);
   // 3. 天候抽選（当ターン開始時点の高度）
   const al=ids.map(i=>P[i].alt),Pv=(Math.max(...al)+al.reduce((a,b)=>a+b,0)/al.length)/2;
   const row=TB.find(r=>Pv<r[0])[1];let x=Math.random()*100,w=0;
   while(w<3&&x>=row[w]){x-=row[w];w++}
   // 4. 天候効果
   const mx=Math.max(...ids.map(i=>e[i])),d={};
-  ids.forEach(i=>{const v=e[i];d[i]=w==0?v:w==1?v-1:w==2?(v>=3?v:-1):(v===mx?-3:v)});
+  ids.forEach(i=>{const v=e[i];d[i]=ch[i].ab?v:w==0?v:w==1?v-1:w==2?(v>=3?v:-1):(v===mx?-3:v)});
   // 5. 告発
   const hit={},fl={},acc=[];
   ids.forEach(i=>{const c=ch[i];if(!c.tg)return;const ok=P[c.tg].role===c.rl;
@@ -211,7 +239,7 @@ function resolve(){
     p.alt=Math.min(20,p.alt+dl);if(dl<0)p.retreat=(p.retreat||0)+1;
     if(p.role==='S'&&p.alt>=10&&!p.reach)p.reach=t;
     rows[i]={pt:ch[i].pt,e:e[i],d:d[i],pn}});
-  const last={turn:t,P:Pv,w,nAb,rows,acc};
+  const last={turn:t,P:Pv,w,ig:ids.filter(i=>ch[i].ab),rows,acc};
   const out={players:P,last,choices:null,['hist/t'+t]:last};
   const win=ids.filter(i=>P[i].role==='S'&&P[i].alt>=10&&!R.sDq);   // 先に非登頂者が到達していれば資格なし
   out.anyReach=!!R.anyReach||ids.some(i=>P[i].alt>=10);
@@ -231,7 +259,7 @@ function lastView(P){
   const L=R.last;if(!L)return'';
   const nm=i=>esc((P[i]||{}).name||'?');
   return `<section><h2>ターン${L.turn}の結果</h2>
-  <p class="big">${WN[L.w]}</p><p class="mute">天候判定値 ${L.P.toFixed(1)}${L.nAb?` ／ 山の主の能力で選択ポイント−${L.nAb}`:''}</p>
+  <p class="big">${WN[L.w]}</p><p class="mute">天候判定値 ${L.P.toFixed(1)}${(L.ig||[]).length?` ／ ${L.ig.map(nm).join('・')}は天候を無視`:''}</p>
   <table><tr><th>名前</th><th>選択</th><th>実効</th><th>天候</th><th>告発P</th></tr>
   ${Object.keys(L.rows).map(i=>{const r=L.rows[i];return `<tr><td>${nm(i)}</td><td>${r.pt}</td><td>${r.e}</td><td>${r.d>0?'+':''}${r.d}</td><td>${r.pn?'−'+r.pn:''}</td></tr>`}).join('')}</table>
   ${(L.acc||[]).map(a=>`<p>${nm(a.by)} → ${nm(a.to)}を「${RN[a.rl]}」と告発：<b class="${a.ok?'rC':'warn'}">${a.ok?'成功':'失敗'}</b></p>`).join('')}</section>`;
@@ -245,13 +273,50 @@ function form(m,P){
   <div class="pts">${pts}</div>
   ${m.accUsed?'<p class="mute">告発権は使用済みです</p>':`<div class="row"><select aria-label="告発する相手" onchange="sel.tg=this.value"><option value="">告発しない</option>${others.map(i=>`<option value="${i}"${sel.tg===i?' selected':''}>${esc(P[i].name)}</option>`).join('')}</select>
   <select aria-label="告発する役職" onchange="sel.rl=this.value"><option value="">役職</option>${Object.keys(RN).map(k=>`<option value="${k}"${sel.rl===k?' selected':''}>${RN[k]}</option>`).join('')}</select></div>`}
-  ${m.role==='M'&&!m.abil?`<label><input type="checkbox" style="width:auto;min-height:0" ${sel.ab?'checked':''} onchange="sel.ab=this.checked"> 能力を使う（全員の選択ポイント−1・天候は見られません）</label>`:''}
+  ${m.role==='M'&&!m.abil?`<label><input type="checkbox" style="width:auto;min-height:0" ${sel.ab?'checked':''} onchange="sel.ab=this.checked"> このターンに能力を使う（自分だけ天候を無視・1回のみ・天候は見られません）</label>`:''}
   <button class="go" onclick="submit()">決定</button></section>`;
+}
+
+const pos=(t,a,k,n)=>{const f=(Math.max(-5,Math.min(20,a))+5)/25,ln=n>1?k/(n-1)*2-1:0;t.style.left=(50+ln*(1-f)*40)+'%';t.style.bottom=(4+f*80)+'%'};
+const parts=(c,n)=>Array.from({length:n},()=>`<i class="${c}" style="left:${Math.random()*100}%;animation-delay:-${Math.random()*1.2}s"></i>`).join('');
+function fx(w){
+  const sc=$('#scene'),f=$('#fx'),l=$('#wl');
+  sc.className='w'+w+(w==3?' sh':'');
+  f.innerHTML=['<i class="sun"></i>',parts('dr',55),parts('fl',70),parts('av',12)][w];
+  l.textContent=['☀️ 晴れ','🌧️ 雨','🌨️ 吹雪','🏔️ 雪崩'][w];
+  l.classList.remove('show');void l.offsetWidth;l.classList.add('show');
+  setTimeout(()=>{f.innerHTML='';sc.classList.remove('sh')},2400);
+}
+function move(){
+  if(!R||!R.players)return;const P=R.players,ids=Object.keys(P);
+  ids.forEach((i,k)=>{const t=$('#t'+i);if(!t)return;
+    const a=P[i].alt||0,df=a-(shown[i]||0);pos(t,a,k,ids.length);
+    if(df){const p=document.createElement('b');p.className='pop';p.style.color=df>0?'#9be8b8':'#ff9c85';p.textContent=(df>0?'+':'')+df;t.appendChild(p);setTimeout(()=>p.remove(),2100)}
+    shown[i]=a});
+}
+function reset(){const sc=$('#scene');sc.hidden=true;sc.querySelectorAll('.tk').forEach(e=>e.remove());shown={};seenTurn=null;anim=false;celeb=false;$('#conf').innerHTML=''}
+function stage(P){
+  const sc=$('#scene'),ids=Object.keys(P),L=R.last,n=ids.length;sc.hidden=false;
+  ids.forEach((i,k)=>{if($('#t'+i))return;
+    const t=document.createElement('div'),a=P[i].alt||0;
+    t.id='t'+i;t.className='tk nt'+(i===me?' me':'');
+    t.innerHTML=`${esc(Array.from(P[i].name)[0])}<small>${esc(P[i].name)}</small>`;
+    sc.appendChild(t);pos(t,a,k,n);shown[i]=a;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.remove('nt')))});
+  if(seenTurn===null)seenTurn=L?L.turn:0;
+  else if(L&&L.turn>seenTurn){seenTurn=L.turn;anim=true;fx(L.w);setTimeout(move,2400);setTimeout(()=>{anim=false;render()},4500)}
+}
+function celebrate(){
+  const cs=['#e3a63b','#d2603f','#62b08e','#8fb7e8','#f4f7f9'];
+  $('#conf').innerHTML=Array.from({length:90},()=>`<i style="left:${Math.random()*100}%;background:${cs[Math.random()*5|0]};animation-duration:${2.5+Math.random()*2.5}s;animation-delay:${Math.random()*1.5}s"></i>`).join('');
+  (R.winners||[]).forEach(i=>{const t=$('#t'+i);if(t)t.classList.add('win')});
+  setTimeout(()=>{$('#conf').innerHTML=''},7500);
 }
 
 function render(){
   const g=$('#game');if(!R){g.innerHTML='';return}
   const P=R.players||{},ids=Object.keys(P),m=P[me],isHost=R.host===me,ph=R.phase;
+  if(ph==='lobby')reset();else stage(P);
   let h=`<p class="mute">部屋番号 <b>${esc(code)}</b></p>`;
   if(ph==='lobby'){
     h+=`<section><h2>参加者（${ids.length}/8）</h2>${ids.map(i=>`<div class="pl"><div class="nm">${esc(P[i].name)}${i===R.host?'<small>ホスト</small>':''}</div></div>`).join('')}
@@ -260,9 +325,9 @@ function render(){
     if(sel.t!==R.turn)sel={pt:1,ab:false,tg:'',rl:'',t:R.turn};
     const end=ph==='end';
     if(m)h+=`<section><h2>あなたの役職：<span class="r${m.role}">${RN[m.role]}</span></h2><p class="mute">${end?'ゲーム終了':`ターン ${R.turn} / ${MAXT}`}　高度 ${m.alt}</p></section>`;
-    if(end){const w=R.winners||[];
-      h+=`<section><h2>勝者</h2><p class="big">${w.length?w.map(i=>esc(P[i].name)+` <em class="r${P[i].role}">${RN[P[i].role]}</em>`).join('　'):'勝者なし'}</p><p class="mute">${esc(R.why||'')}${w.length>1?'（全条件が同点のため共同勝利）':''}</p>${isHost?'<button class="go" onclick="again()">もう一度（ロビーへ）</button>':''}</section>`}
-    h+=`<section><h2>高度（10が登頂ライン）</h2>${board(P,end)}</section>`+lastView(P);
+    if(end&&!anim){const w=R.winners||[];
+      h+=`<section class="winner"><h2>勝者</h2><p class="big">${w.length?'👑 '+w.map(i=>esc(P[i].name)+` <em class="r${P[i].role}">${RN[P[i].role]}</em>`).join('　'):'勝者なし'}</p><p class="mute">${esc(R.why||'')}${w.length>1?'（全条件が同点のため共同勝利）':''}</p>${isHost?'<button class="go" onclick="again()">もう一度（ロビーへ）</button>':''}</section>`}
+    h+=`<section><h2>高度（10が登頂ライン）</h2>${board(P,end)}</section>`+(anim?'':lastView(P));
     if(!end&&m){
       const C=R.choices||{},done=ids.filter(i=>C[i]&&C[i].t===R.turn).length;
       h+=C[me]&&C[me].t===R.turn
@@ -271,5 +336,6 @@ function render(){
     }
   }
   g.innerHTML=h;
+  if(ph==='end'&&!anim&&!celeb){celeb=true;celebrate()}
 }
 </script></main></body></html>
