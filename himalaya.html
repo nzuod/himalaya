@@ -117,7 +117,16 @@ td,th{padding:4px 6px;text-align:right;border-top:1px solid var(--line)}td:first
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 // ▼ Firebaseコンソール > プロジェクト設定 > マイアプリ の値を貼る（Realtime Database を使用）
-const CFG={apiKey:"",authDomain:"",databaseURL:"",projectId:"",appId:""};
+const CFG={
+  apiKey: "AIzaSyBXOUSjQp6DgGY05MVLL6W9chMTx3GyHy4",
+  authDomain: "himalaya-39a80.firebaseapp.com",
+  databaseURL: "https://himalaya-39a80-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "himalaya-39a80",
+  storageBucket: "himalaya-39a80.firebasestorage.app",
+  messagingSenderId: "148202710728",
+  appId: "1:148202710728:web:7c8b236cd1d1c90ef327fd",
+  measurementId: "G-GPELFLJJ8B"
+};
 
 const RN={S:'登頂者',C:'登山者',L:'遭難者',M:'山の主'},WN=['晴れ','雨','吹雪','雪崩'];
 const LIM={p1:99,p2:3,p3:1,p4:1,p5:1},MAXT=7;
@@ -226,7 +235,7 @@ function resolve(){
   const row=TB.find(r=>Pv<r[0])[1];let x=Math.random()*100,w=0;
   while(w<3&&x>=row[w]){x-=row[w];w++}
   // 4. 天候効果
-  const mx=Math.max(...ids.map(i=>e[i])),d={};
+  const mx=Math.max(...ids.filter(i=>!ch[i].ab).map(i=>e[i])),d={};   // 天候無視の山の主は雪崩の最大ポイント判定から除く（次点の人が対象）
   ids.forEach(i=>{const v=e[i];d[i]=ch[i].ab?v:w==0?v:w==1?v-1:w==2?(v>=3?v:-1):(v===mx?-3:v)});
   // 5. 告発
   const hit={},fl={},acc=[];
